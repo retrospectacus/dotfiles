@@ -1,0 +1,77 @@
+
+#######
+# Results from last command
+#######
+
+p=( "${PIPESTATUS[@]}" )
+q=${p[-1]}
+n=${#p[@]}
+l=$(history|tail -n1|sed -e 's/^\s*[0-9]\+\s*//')
+IFS='|' read -ra cmds <<<"$l"
+if [ $q = 0 -a $n = 1 ] 
+then 
+  last=$(echo -e '\e[1;32m' "$l ")
+  smile=$(echo -e '\e[1;32m ✔ ') 
+elif [ $n = 1 ]
+then
+  last=$(echo -e '\e[1;31m' "$l ")
+  smile=$(echo -e '\e[1;31m 💣💥' "$q ")
+elif [ ${#p[@]} = ${#cmds[@]} ]
+then
+  last=''
+  smile=''
+  for i in ${!cmds[@]}
+  do
+    cmd=$(echo ${cmds[$i]})
+    len=${#cmd}
+    if [ -n "$last" ]
+    then
+      last="$last|"
+      smile="$smile|"
+    fi
+    if [ ${p[$i]} = 0 ]
+    then
+      last=$(echo -n "$last"; echo -en '\e[1;32m' "$cmd" '\e[0m')
+      smile=$(echo -n "$smile"; echo -en '\e[1;32m' "$(printf "%${len}s" 0)" '\e[0m')
+    else
+      last=$(echo -n "$last"; echo -e '\e[1;31m' "$cmd" '\e[0m')
+      smile=$(echo -n "$smile"; echo -e '\e[1;31m' "$(printf "%${len}s" ${p[$i]})" '\e[0m')
+    fi
+  done
+else
+  last=$(echo -e '\e[1;31m' $l)
+  smile=$(echo -en '\e[1;31m '; join_by ' | ' ${p[@]}; echo -n ' 💣💥')
+fi 
+
+#######
+## Git branch
+#######
+
+brnch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+if [ -n "$brnch" ]
+then 
+  if git diff --quiet
+  then
+    brnch=$(echo -e '\e[0m:\e[1;32m'$brnch)
+  else
+    brnch=$(echo -e '\e[0m:\e[1;31m'$brnch)
+  fi
+fi
+
+#######
+## K8s current context
+#######
+
+kps=''
+if [ -n "$__kubeon" ] # use `kon` or `koff` to apply this environment export.
+then
+  context=$(kubectl config current-context 2>/dev/null)
+  namespace=$(kubectl config view --minify --output 'jsonpath={..namespace}' 2>/dev/null)
+  namespace=${namespace:-default}
+  if [ -n "$context" ]
+  then
+    kps=$(echo -e "\n├─[ \e[1;34m☸️  \e[1;32m$context\e[0m:\e[1;35m$namespace\e[0;36m ]")
+  fi
+fi
+
+

@@ -1,0 +1,12 @@
+
+COLOURS=( 32 33 34 35 36 37 )
+N=${#COLOURS[@]}
+HOSTNUM=$(echo $HOSTNAME | md5sum | cut -c1-2)
+((N=0x$HOSTNUM%N))
+COLOURNUM="${COLOURS[$N]}"
+HOSTCOLOUR="\[\e[1;${COLOURNUM}m\]"
+PROMPT_COMMAND="source $HOME/.prompt_command"
+PS1="\[\e[0;36m\]┌─[\$last\[\e[0m\]\[\e[0;36m\]]─[\[\e[1;36m\]\t\[\e[0;36m\]]
+\[\e[0;36m\]├─[\$smile\[\e[0m\]\[\e[0;36m\]]─[\[\e[1;37m\]\w\$brnch\[\e[0;36m\]]\$kps
+\[\e[0;36m\]└─[\[\e[1;33m\]\u\[\e[1;36m\]@$HOSTCOLOUR$HOSTNAME\[\e[0;36m\]]$ \[\e[0m\]"
+
